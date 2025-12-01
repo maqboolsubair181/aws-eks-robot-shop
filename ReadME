@@ -1,0 +1,153 @@
+🤖 AWS EKS Microservices Project (Robot Shop)
+
+A production-grade implementation of a Three-Tier Microservices architecture on Amazon EKS. This project provisions a secure, scalable Kubernetes cluster using Terraform and deploys the Instana Robot Shop application (Redis, MySQL, RabbitMQ, Python, Java, NodeJS) exposed via an AWS Application Load Balancer.
+
+🏗 Architecture Overview
+
+This project builds a "Real-World" infrastructure stack, moving beyond simple demos to tackle actual production challenges like networking limits and security isolation.
+
+VPC Networking: A custom VPC with Private Subnets for worker nodes (security) and Public Subnets for Load Balancers.
+
+EKS Cluster: Managed Kubernetes Control Plane with OIDC integration.
+
+Compute: m7i-flex.large instances chosen to handle high Pod density and memory requirements (avoiding common t3.medium OOM errors).
+
+Ingress: AWS Load Balancer Controller automatically provisions an Application Load Balancer (ALB) when Ingress resources are detected.
+
+Storage: EBS CSI Driver installed to manage persistent volumes for MySQL and Redis.
+
+📂 Repository Structure
+
+aws-eks-robot-shop/
+├── infrastructure/        # Terraform IaC (The Platform)
+│   ├── vpc.tf             # Networking & Subnet tagging for ALB
+│   ├── eks.tf             # Cluster, Node Groups, & Addons
+│   ├── alb-controller.tf  # Helm release for the Ingress Controller
+│   └── ...
+└── application/           # Kubernetes Manifests (The App)
+    ├── helm      # The bridge between K8s and AWS ALB
+    └── ...                # Microservices Deployment Configs
+
+
+🚀 Prerequisites
+
+Ensure you have the following installed:
+
+AWS CLI (Configured with aws configure)
+
+Terraform (v1.0+)
+
+Kubectl
+
+🛠 Deployment Guide
+
+Phase 1: Provision Infrastructure
+
+Build the VPC and EKS Cluster. This takes approximately 15 minutes.
+
+cd infrastructure
+
+# Initialize Terraform (Downloads providers)
+terraform init
+
+# Plan and Apply
+terraform apply --auto-approve
+
+
+Phase 2: Connect to Cluster
+
+Once Terraform finishes, configure your local kubectl to talk to the new cluster.
+
+# Replace <region> and <cluster_name> with values from Terraform output
+aws eks update-kubeconfig --region us-east-1 --name <cluster_name>
+
+# Verify connection (Should show 2 nodes Ready)
+kubectl get nodes
+
+
+Phase 3: Deploy Application
+
+Deploy the microservices stack.
+
+cd ../application
+
+# Deploy all services
+kubectl apply -f .
+
+# ⚠️ IMPORTANT: Apply Ingress specifically to trigger the Load Balancer
+kubectl apply -f ingress.yaml
+
+
+Phase 4: Access the Shop
+
+Wait 2-3 minutes for the AWS Application Load Balancer to provision.
+
+Get the URL:
+
+kubectl get ingress
+
+
+Copy the ADDRESS (e.g., k8s-robotshop-....us-east-1.elb.amazonaws.com).
+
+Open it in your browser (Ensure you use http://, not https:// unless ACM is configured).
+
+💸 Cost Estimation (Warning)
+
+This project uses resources that are NOT Free Tier eligible.
+
+EKS Cluster: ~$0.10/hour
+
+Nodes (m7i-flex.large): ~$0.19/hour (Total for 2 nodes)
+
+AWS Load Balancer: ~$0.0225/hour + LCU charges
+
+Estimated Cost: ~$0.35 per hour while running.
+
+🧹 Cleanup (Critical)
+
+To avoid "Zombie Load Balancers" (which cost money even after the cluster is gone), follow this exact destruction order:
+
+Delete Ingress First:
+
+kubectl delete -f ingress.yaml
+
+
+Wait 1 minute for the ALB to be removed from the AWS Console.
+
+Destroy Infrastructure:
+
+cd ../infrastructure
+terraform destroy --auto-approve
+
+
+🚑 Troubleshooting
+
+Issue
+
+Cause
+
+Fix
+
+0/2 nodes available: Too many pods
+
+Instance type too small (e.g., t3.micro).
+
+Upgrade node group to m7i-flex.large or t3a.large.
+
+CrashLoopBackOff on ALB Controller
+
+OIDC or IAM permissions missing.
+
+Ensure enable_irsa = true is in Terraform and re-apply.
+
+Browser: 502 Bad Gateway
+
+Pods are running but SG blocks traffic.
+
+Check Worker Node Security Group rules to allow traffic from ALB.
+
+Terraform Unreadable module
+
+Dirty .terraform cache.
+
+Run rm -rf .terraform .terraform.lock.hcl and terraform init.
