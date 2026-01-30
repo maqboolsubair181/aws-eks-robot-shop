@@ -1,8 +1,8 @@
-🤖 AWS EKS Microservices Project (Robot Shop)
+ AWS EKS Microservices Project (Robot Shop)
 
 A production-grade implementation of a Three-Tier Microservices architecture on Amazon EKS. This project provisions a secure, scalable Kubernetes cluster using Terraform and deploys the Instana Robot Shop application (Redis, MySQL, RabbitMQ, Python, Java, NodeJS) exposed via an AWS Application Load Balancer.
 
-🏗 Architecture Overview
+ Architecture Overview
 
 This project builds a "Real-World" infrastructure stack, moving beyond simple demos to tackle actual production challenges like networking limits and security isolation.
 
@@ -16,7 +16,7 @@ Ingress: AWS Load Balancer Controller automatically provisions an Application Lo
 
 Storage: EBS CSI Driver installed to manage persistent volumes for MySQL and Redis.
 
-📂 Repository Structure
+ Repository Structure
 
 aws-eks-robot-shop/
 ├── infrastructure/        # Terraform IaC (The Platform)
@@ -29,7 +29,7 @@ aws-eks-robot-shop/
     └── ...                # Microservices Deployment Configs
 
 
-🚀 Prerequisites
+ Prerequisites
 
 Ensure you have the following installed:
 
@@ -39,7 +39,7 @@ Terraform (v1.0+)
 
 Kubectl
 
-🛠 Deployment Guide
+ Deployment Guide
 
 Phase 1: Provision Infrastructure
 
@@ -74,7 +74,7 @@ cd ../application
 # Deploy all services
 kubectl apply -f .
 
-# ⚠️ IMPORTANT: Apply Ingress specifically to trigger the Load Balancer
+#  IMPORTANT: Apply Ingress specifically to trigger the Load Balancer
 kubectl apply -f ingress.yaml
 
 
@@ -91,7 +91,7 @@ Copy the ADDRESS (e.g., k8s-robotshop-....us-east-1.elb.amazonaws.com).
 
 Open it in your browser (Ensure you use http://, not https:// unless ACM is configured).
 
-💸 Cost Estimation (Warning)
+ Cost Estimation (Warning)
 
 This project uses resources that are NOT Free Tier eligible.
 
@@ -103,7 +103,7 @@ AWS Load Balancer: ~$0.0225/hour + LCU charges
 
 Estimated Cost: ~$0.35 per hour while running.
 
-🧹 Cleanup (Critical)
+ Cleanup (Critical)
 
 To avoid "Zombie Load Balancers" (which cost money even after the cluster is gone), follow this exact destruction order:
 
@@ -120,7 +120,7 @@ cd ../infrastructure
 terraform destroy --auto-approve
 
 
-🚑 Troubleshooting
+ Troubleshooting
 
 Issue
 
